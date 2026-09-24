@@ -68,7 +68,33 @@ Faithfulness of the neuron circuits on held-out pairs:
 * The official code's claim that MAttr with SGD beats IG at recovering these neurons does not reproduce in our single run. IG ranks them best. The neurons were selected by overlap with a linear DAS subspace, which may favour gradient methods, and MAttr is trained to keep the answer, not to find them.
 * MAttr's CPR lead at neuron level comes from overshoot. With 5% of units kept, its circuit pushes the logit difference up to 7 times past the full model. On Compactness and at the smallest circuits, IG is as good or better.
 
-Months results are added when that run finishes.
+### Months (5,963,776 units, trained on months prompts only)
+
+`Q: What month is three months after July?\nA:` (13 tokens, 2,724 training pairs, 300 test pairs).
+
+| method | top 10 | top 100 | top 1,000 | median rank of Feucht's 16 months neurons |
+|---|---|---|---|---|
+| MAttr Adam eps 1e-2 | 2 | 8 | 15 / 16 | 140 |
+| IG (m = 10) | 3 | 10 | 16 / 16 | 44 |
+| Random | 0 | 0 | 0 | 217,117 |
+
+Overlap between the top-500 neurons found on addition and on months, two independent runs on two datasets: MAttr 139, IG 184, chance 0.55. MAttr trained only on months puts `L18/N1712` and `L18/N10099`, which are in both of Feucht's sets, at #5 and #6. This is Feucht et al.'s central claim, that Llama reuses its addition neurons for calendar arithmetic, recovered without supervision. Again, IG does it slightly better.
+
+## Scorecard
+
+| paper claim | our result | verdict |
+|---|---|---|
+| Sigmoid top-k keeps exactly `k` and is nested in `k` | exact to 1e-6, gradient matches finite differences to 1e-10 | reproduced |
+| Theorem 1: first MAttr step is centred, Beta(2,2)-weighted IG | matches the exact integral to 1.7e-14 | reproduced |
+| MAttr beats causal patching, IG and I×G on node-level CPR | 1.73 vs 1.20 / 1.18 / 0.25 | reproduced (ordering) |
+| Known arithmetic heads rank high | #4 and #15, or #1 and #2 with log `k`. Patching and IG also find them | reproduced, not unique to MAttr |
+| Log-uniform `k` sharpens the small-circuit end | known heads to #1 and #2, input node #21 to #8, CPR 1.73 to 1.68 | reproduced |
+| Adam eps matters at neuron level | median rank 276 vs 1,538, Compactness 0.968 vs 0.904 | reproduced |
+| MAttr matches or beats IG at recovering published neurons | IG best in our run, on both addition and months | not reproduced (single run) |
+| Addition and months share neurons | 139 of top-500 shared, about 250 times chance | reproduced |
+| Parameter attribution with RL (refusal) | not run | not tested |
+
+Scope: one task family, one seed per neuron-level arm, batch 8, fp16 on T4, our own implementation of the metrics.
 
 ## Setup notes
 
