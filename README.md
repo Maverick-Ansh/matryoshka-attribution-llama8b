@@ -38,7 +38,37 @@ The ordering matches the paper's MIB node-level average (MAttr 2.06, IG about 1.
 * I×G falls to random because it ranks the input embedding 1,049th of 1,057. Every kept head recomputes from its inputs, so no circuit works without the input.
 * Much of MAttr's CPR lead comes from overshoot. At `k = 528` its circuit has faithfulness 2.31. That means it moves the logit difference 2.31 times as far from the fully swapped run as the full model does. The paper itself notes that CPR rewards this, which is why it adds Compactness, where the top three methods tie.
 
-Neuron-level and months results are added when the runs finish.
+**One knob at a time (node level).** Three seeds give CPR 1.73, 1.74, 1.73, so the curve is stable, although individual ranks wobble by a few places. Switching to a log-uniform `k` schedule costs a little CPR (1.68) and moves the two known arithmetic heads to #1 and #2, as the paper's §4 Result 2 predicts.
+
+### Neuron level (2,293,760 units, 5,000 steps each)
+
+Where do the 28 layer-18 addition neurons found by hand by Feucht et al. (2026) land, among all 458,752 neurons of the model?
+
+| method | top 10 | top 100 | top 1,000 | median rank |
+|---|---|---|---|---|
+| IG (m = 10) | 3 | 15 | 28 / 28 | 89 |
+| MAttr SGD (log `k`) | 1 | 6 | 27 | 186 |
+| I×G | 0 | 8 | 25 | 193 |
+| MAttr Adam eps 1e-2 | 0 | 3 | 22 | 276 |
+| MAttr Adam eps 1e-8 | 0 | 1 | 11 | 1,538 |
+| Random | 0 | 0 | 1 | 235,923 |
+
+Faithfulness of the neuron circuits on held-out pairs:
+
+| method | CPR | Compactness | faithfulness with 0.1% of units |
+|---|---|---|---|
+| MAttr Adam eps 1e-2 | 5.20 | 0.968 | 0.60 |
+| MAttr Adam eps 1e-8 | 6.29 | 0.904 | 0.22 |
+| MAttr SGD | 1.12 | 0.948 | 0.82 |
+| IG (m = 10) | 1.06 | 0.978 | 0.87 |
+| I×G | 1.03 | 0.587 | 0.10 |
+
+* Every method is hundreds of times better than chance at finding the hand-found neurons, from a search over the whole model with no hint about layer 18.
+* The Adam eps effect reproduces. Changing only eps from 1e-8 to 1e-2 improves the median rank of the known neurons 5.6 times and raises Compactness. The eps 1e-8 run has the higher CPR, which matches the paper's Fig. 8.
+* The official code's claim that MAttr with SGD beats IG at recovering these neurons does not reproduce in our single run. IG ranks them best. The neurons were selected by overlap with a linear DAS subspace, which may favour gradient methods, and MAttr is trained to keep the answer, not to find them.
+* MAttr's CPR lead at neuron level comes from overshoot. With 5% of units kept, its circuit pushes the logit difference up to 7 times past the full model. On Compactness and at the smallest circuits, IG is as good or better.
+
+Months results are added when that run finishes.
 
 ## Setup notes
 
